@@ -1,0 +1,1013 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#0a84ff">
+<title>حاسبة التعرفة | الكهرباء والمياه</title>
+<meta name="description" content="احسب فاتورة الكهرباء والمياه بالتعرفة الحالية والجديدة: أدخل قيمة الفاتورة أو الاستهلاك الشهري وشاهد المقارنة والفرق فورًا.">
+<style>
+/* ==========================================================================
+   حاسبة التعرفة — Apple HIG / Liquid Glass
+   Layers: ambient wash → content (solid, quiet) → functional (glass) 
+   System Arabic type only (SF Arabic on Apple devices, no webfont download).
+   ========================================================================== */
+:root{
+  --ink:#111114; --ink-2:#5F5F63; --ink-3:#636366;
+  --bg:#EFF1F5;
+  --surface:#FFFFFF; --surface-2:#F7F8FA; --surface-3:#EEF0F4;
+  --line:rgba(17,17,20,.10); --line-2:rgba(17,17,20,.06);
+  --blue:#0A84FF; --blue-text:#0057B8; --blue-soft:rgba(10,132,255,.12);
+  --green:#34C759; --green-text:#14702F; --green-soft:rgba(52,199,89,.14);
+  --red:#FF3B30; --red-text:#B3261E; --red-soft:rgba(255,59,48,.12);
+  --amber:#FF9F0A; --amber-text:#8A5200; --amber-soft:rgba(255,159,10,.15);
+
+  --glass-blur: blur(28px) saturate(180%);
+  --glass-bg: rgba(255,255,255,.58);
+  --glass-line: rgba(255,255,255,.72);
+  --glass-shadow: 0 10px 30px rgba(24,32,54,.13), inset 0 1px 0 rgba(255,255,255,.92), inset 0 -1px 0 rgba(255,255,255,.28);
+
+  --r-pill:999px; --r-lg:22px; --r-md:16px; --r-sm:11px;
+  --tap:46px;
+  --f:-apple-system,BlinkMacSystemFont,"SF Arabic","SF Pro Text","SF Pro Display","Segoe UI",system-ui,"Noto Kufi Arabic",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --ink:#F5F5F7; --ink-2:#AEAEB2; --ink-3:#8A8A8E;
+    --bg:#0A0A0C;
+    --surface:#17171A; --surface-2:#1F1F23; --surface-3:#26262B;
+    --line:rgba(255,255,255,.14); --line-2:rgba(255,255,255,.08);
+    --blue:#0A84FF; --blue-text:#64B5FF; --blue-soft:rgba(10,132,255,.22);
+    --green:#30D158; --green-text:#30D158; --green-soft:rgba(48,209,88,.20);
+    --red:#FF453A; --red-text:#FF7A70; --red-soft:rgba(255,69,58,.20);
+    --amber:#FFD60A; --amber-text:#FFB340; --amber-soft:rgba(255,214,10,.18);
+    --glass-bg: rgba(255,255,255,.10);
+    --glass-line: rgba(255,255,255,.20);
+    --glass-shadow: 0 18px 50px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.24), inset 0 -1px 0 rgba(255,255,255,.06);
+  }
+}
+html[data-theme="light"]{
+  --ink:#111114; --ink-2:#5F5F63; --ink-3:#636366; --bg:#EFF1F5;
+  --surface:#FFFFFF; --surface-2:#F7F8FA; --surface-3:#EEF0F4;
+  --line:rgba(17,17,20,.10); --line-2:rgba(17,17,20,.06);
+  --blue-text:#0057B8; --green-text:#14702F; --red-text:#B3261E; --amber-text:#8A5200;
+  --glass-bg: rgba(255,255,255,.58); --glass-line: rgba(255,255,255,.72);
+  --glass-shadow: 0 10px 30px rgba(24,32,54,.13), inset 0 1px 0 rgba(255,255,255,.92), inset 0 -1px 0 rgba(255,255,255,.28);
+}
+html[data-theme="dark"]{
+  --ink:#F5F5F7; --ink-2:#AEAEB2; --ink-3:#8A8A8E; --bg:#0A0A0C;
+  --surface:#17171A; --surface-2:#1F1F23; --surface-3:#26262B;
+  --line:rgba(255,255,255,.14); --line-2:rgba(255,255,255,.08);
+  --blue-text:#64B5FF; --green-text:#30D158; --red-text:#FF7A70; --amber-text:#FFB340;
+  --glass-bg: rgba(255,255,255,.10); --glass-line: rgba(255,255,255,.20);
+  --glass-shadow: 0 18px 50px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.24), inset 0 -1px 0 rgba(255,255,255,.06);
+}
+
+*,*::before,*::after{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; }
+body{
+  font-family:var(--f); color:var(--ink); background:var(--bg);
+  font-size:16px; line-height:1.45; -webkit-font-smoothing:antialiased;
+  min-height:100dvh;
+}
+/* ambient wash so the glass has something to refract */
+body::before{
+  content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background:
+    radial-gradient(38rem 30rem at 88% -6%, rgba(10,132,255,.20), transparent 62%),
+    radial-gradient(34rem 26rem at 4% 8%, rgba(90,200,250,.20), transparent 60%),
+    radial-gradient(30rem 24rem at 50% 108%, rgba(94,92,230,.16), transparent 62%),
+    var(--bg);
+  background-attachment:fixed;
+}
+h1,h2,h3,p,figure{ margin:0; }
+button,input,select{ font:inherit; color:inherit; }
+button{ background:none; border:0; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.num{ font-variant-numeric:tabular-nums; }
+.sr{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+.wrap{ max-width:760px; margin:0 auto; padding:14px 18px calc(52px + env(safe-area-inset-bottom)); }
+
+/* ---------- functional layer: glass ---------- */
+.glass{
+  background:var(--glass-bg);
+  -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
+  border:1px solid var(--glass-line);
+  box-shadow:var(--glass-shadow);
+}
+.btn{
+  border-radius:var(--r-pill); min-height:var(--tap); padding:0 22px;
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  font-size:15px; font-weight:650; color:var(--ink);
+  background:var(--glass-bg); border:1px solid var(--glass-line); box-shadow:var(--glass-shadow);
+  -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
+  transition:transform .18s cubic-bezier(.2,.8,.2,1), box-shadow .18s ease;
+}
+.btn:hover{ transform:translateY(-1px); }
+.btn:active{ transform:translateY(0) scale(.985); }
+.btn.tint{
+  background:rgba(10,132,255,.72); border-color:rgba(170,214,255,.7); color:#fff;
+  box-shadow:0 18px 40px rgba(10,132,255,.30), inset 0 1px 0 rgba(255,255,255,.7), inset 0 -1px 0 rgba(255,255,255,.14);
+}
+.icon-btn{ width:var(--tap); height:var(--tap); flex:0 0 var(--tap); border-radius:50%; padding:0; font-size:17px; }
+:where(button,input,select,a):focus-visible{ outline:3px solid var(--blue); outline-offset:2px; border-radius:12px; }
+
+/* ---------- header ---------- */
+.hd{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 2px 20px; }
+.brand{ display:flex; align-items:center; gap:11px; }
+.mark{
+  width:44px; height:44px; border-radius:14px; display:grid; place-items:center; color:#fff;
+  background:linear-gradient(150deg,#4FB0FF,#0A84FF 55%,#5E5CE6);
+  box-shadow:0 12px 26px rgba(10,132,255,.34), inset 0 1px 0 rgba(255,255,255,.55);
+}
+.mark svg{ width:24px; height:24px; }
+.brand b{ font-size:16.5px; font-weight:750; letter-spacing:-.2px; display:block; }
+.brand span{ font-size:12.5px; color:var(--ink-2); font-weight:550; }
+.hd-tools{ display:flex; gap:9px; }
+
+/* ---------- hero ---------- */
+.hero{ padding:6px 2px 22px; }
+.eyebrow{ font-size:12.5px; font-weight:700; color:var(--blue-text); letter-spacing:.2px; }
+h1{ font-size:31px; font-weight:800; letter-spacing:-.9px; line-height:1.22; margin:7px 0 8px; }
+.intro{ font-size:14.5px; color:var(--ink-2); max-width:52ch; }
+
+/* ---------- segmented control (the ONE coloured glass element) ---------- */
+.seg{
+  display:flex; gap:4px; padding:4px; border-radius:var(--r-pill); margin-bottom:20px;
+  background:var(--glass-bg); border:1px solid var(--glass-line); box-shadow:var(--glass-shadow);
+  -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
+}
+.seg button{
+  flex:1; min-height:44px; border-radius:var(--r-pill); font-size:14.5px; font-weight:700; color:var(--ink-2);
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  transition:transform .18s ease;
+}
+.seg button svg{ width:18px; height:18px; }
+.seg button[aria-pressed="true"]{
+  color:#fff; background:rgba(10,132,255,.72);
+  border:1px solid rgba(170,214,255,.7);
+  box-shadow:0 10px 24px rgba(10,132,255,.28), inset 0 1px 0 rgba(255,255,255,.65);
+}
+.seg button:active{ transform:scale(.985); }
+
+/* ---------- content cards ---------- */
+.card{
+  background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg);
+  padding:18px; margin-bottom:16px; box-shadow:0 1px 2px rgba(17,17,20,.04);
+}
+.card-h{ display:flex; align-items:center; gap:9px; margin-bottom:14px; }
+.card-h h2{ font-size:15px; font-weight:750; letter-spacing:-.2px; }
+.tile{
+  width:30px; height:30px; flex:0 0 30px; border-radius:10px; display:grid; place-items:center;
+  background:var(--surface-3); color:var(--ink-2);
+}
+.tile svg{ width:17px; height:17px; }
+.field-label{ font-size:13px; font-weight:650; color:var(--ink-2); margin-bottom:9px; display:block; }
+
+/* ---------- mode cards ---------- */
+.modes{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.mode{
+  text-align:right; padding:14px; border-radius:var(--r-md); cursor:pointer;
+  background:var(--surface-2); border:1.5px solid var(--line); transition:border-color .16s ease, background .16s ease;
+}
+.mode[aria-checked="true"]{ border-color:var(--blue); background:rgba(10,132,255,.06); }
+.mode-title{ display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:700; margin-bottom:10px; }
+.mode-title .dot{ width:16px; height:16px; border-radius:50%; border:2px solid var(--line); flex:0 0 16px; }
+.mode[aria-checked="true"] .mode-title .dot{ border-color:var(--blue); box-shadow:inset 0 0 0 4px var(--blue); }
+.input-box{ display:flex; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--line);
+  border-radius:var(--r-sm); padding:0 12px; min-height:var(--tap); }
+.input-box input{ flex:1; min-width:0; height:44px; border:0; background:none; font-size:20px; font-weight:750; letter-spacing:-.4px; padding:0; }
+.input-box input:focus{ outline:none; }
+.input-box input::placeholder{ font-weight:600; color:var(--ink-3); font-size:16px; letter-spacing:0; }
+.input-box .unit{ font-size:12px; font-weight:650; color:var(--ink-3); white-space:nowrap; }
+.input-box:focus-within{ border-color:var(--blue); box-shadow:0 0 0 3px var(--blue-soft); }
+.input-box[data-invalid="true"]{ border-color:var(--red); }
+
+/* ---------- chips ---------- */
+.chips{ display:flex; flex-wrap:wrap; gap:8px; }
+.chips.scroll{ flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; scrollbar-width:none; }
+.chips.scroll::-webkit-scrollbar{ display:none; }
+.chip{
+  flex:0 0 auto; min-height:44px; padding:0 15px; border-radius:var(--r-pill); font-size:13.5px; font-weight:650;
+  color:var(--ink-2); background:var(--glass-bg); border:1px solid var(--glass-line); box-shadow:var(--glass-shadow);
+  -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
+  display:inline-flex; align-items:center; gap:7px; white-space:nowrap;
+  transition:transform .16s ease;
+}
+.chip[aria-pressed="true"]{ background:var(--ink); color:var(--surface); border-color:transparent; }
+.chip:active{ transform:scale(.97); }
+
+/* ---------- switch ---------- */
+.switch-row{ display:flex; align-items:center; justify-content:space-between; gap:14px; min-height:var(--tap); }
+.switch-row + .switch-row{ border-top:1px solid var(--line-2); }
+.switch-text b{ display:block; font-size:14px; font-weight:650; }
+.switch-text span{ font-size:12px; color:var(--ink-2); }
+.switch{
+  position:relative; width:56px; min-height:44px; flex:0 0 56px; padding:0; background:none; border:0;
+}
+.switch::before{
+  content:""; position:absolute; inset-inline:2px; top:6px; bottom:6px; border-radius:999px;
+  background:var(--surface-3); border:1px solid var(--line); transition:background .2s ease, border-color .2s ease;
+}
+.switch::after{
+  content:""; position:absolute; top:10px; inset-inline-end:5px; width:24px; height:24px; border-radius:50%;
+  background:#fff; box-shadow:0 2px 6px rgba(0,0,0,.22); transition:transform .22s cubic-bezier(.2,.8,.2,1);
+}
+.switch[aria-checked="true"]::before{ background:var(--green); border-color:transparent; }
+.switch[aria-checked="true"]::after{ transform:translateX(-20px); }
+html[dir="ltr"] .switch[aria-checked="true"]::after{ transform:translateX(20px); }
+
+/* ---------- stepper ---------- */
+.stepper{ display:flex; align-items:center; gap:10px; }
+.stepper button{
+  width:44px; height:44px; border-radius:12px; font-size:20px; font-weight:600; color:var(--ink);
+  background:var(--surface-2); border:1px solid var(--line); display:grid; place-items:center;
+}
+.stepper input{
+  width:78px; min-height:44px; text-align:center; font-size:16px; font-weight:750;
+  background:var(--surface-2); border:1px solid var(--line); border-radius:12px;
+}
+
+/* ---------- results (content layer) ---------- */
+.res-hero{ text-align:center; padding:24px 18px; }
+.res-hero .k{ font-size:13px; font-weight:650; color:var(--ink-2); }
+.res-hero .v{ font-size:44px; font-weight:800; letter-spacing:-1.8px; line-height:1.16; margin:6px 0 2px; }
+.res-hero .v small{ font-size:15px; font-weight:650; color:var(--ink-3); letter-spacing:0; }
+.res-hero .sub{ font-size:13px; color:var(--ink-2); font-weight:600; }
+.split{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:18px; }
+.mini{ background:var(--surface-2); border:1px solid var(--line); border-radius:var(--r-md); padding:13px 14px; text-align:start; }
+.mini .k{ font-size:12px; color:var(--ink-2); font-weight:650; margin-bottom:5px; }
+.mini .v{ font-size:21px; font-weight:800; letter-spacing:-.6px; }
+.mini .v small{ font-size:11.5px; font-weight:650; color:var(--ink-3); }
+.badge{
+  display:inline-flex; align-items:center; gap:7px; padding:6px 13px; border-radius:var(--r-pill);
+  font-size:13px; font-weight:700; color:var(--ink); background:var(--surface-2); border:1px solid var(--line);
+}
+.badge .b-dot{ width:9px; height:9px; border-radius:50%; background:var(--ink-3); flex:0 0 9px; }
+.badge.up{ background:var(--red-soft); border-color:transparent; }
+.badge.up .b-dot{ background:var(--red); }
+.badge.down{ background:var(--green-soft); border-color:transparent; }
+.badge.down .b-dot{ background:var(--green); }
+.badge.flat .b-dot{ background:var(--ink-3); }
+
+/* ---------- meter ---------- */
+.meter{ margin-top:18px; }
+.meter-head{ display:flex; justify-content:space-between; align-items:baseline; font-size:12.5px; color:var(--ink-2); font-weight:650; margin-bottom:8px; }
+.meter-head b{ font-size:15px; color:var(--ink); font-weight:800; }
+.track{ position:relative; height:12px; border-radius:999px; background:var(--surface-3); overflow:hidden; border:1px solid var(--line-2); }
+.track i{ position:absolute; inset-inline-start:0; top:0; bottom:0; border-radius:999px;
+  background:linear-gradient(90deg,#5AC8FA,#0A84FF); transition:width .35s cubic-bezier(.2,.8,.2,1); }
+.track.warn i{ background:linear-gradient(90deg,#FFD60A,#FF9F0A); }
+.track.over i{ background:linear-gradient(90deg,#FF9F0A,#FF3B30); }
+.track .tick{ position:absolute; top:-3px; bottom:-3px; width:2px; background:var(--ink-3); opacity:.5; border-radius:2px; }
+.meter-foot{ display:flex; justify-content:space-between; font-size:12px; color:var(--ink-3); font-weight:600; margin-top:8px; }
+
+/* ---------- table ---------- */
+.tbl-scroll{ overflow-x:auto; }
+table{ width:100%; border-collapse:collapse; }
+th,td{ padding:11px 12px; font-size:13.5px; text-align:start; border-bottom:1px solid var(--line-2); }
+thead th{ font-size:12px; font-weight:700; color:var(--ink-2); background:var(--surface-2); }
+tbody th{ font-weight:600; color:var(--ink-2); }
+tbody td{ font-weight:700; font-variant-numeric:tabular-nums; }
+tr.total th, tr.total td{ border-bottom:0; background:var(--blue-soft); font-weight:800; color:var(--ink); }
+td .d{ display:inline-block; font-size:11.5px; font-weight:700; color:var(--ink-3); margin-inline-start:6px; }
+
+.err{ color:var(--red-text); font-size:13px; font-weight:650; min-height:20px; margin:10px 2px; }
+.help{ font-size:12.5px; color:var(--ink-3); line-height:1.7; margin:14px 2px 0; }
+.foot{ display:flex; flex-wrap:wrap; gap:14px; align-items:center; justify-content:space-between; margin-top:22px;
+  padding-top:16px; border-top:1px solid var(--line); font-size:12.5px; color:var(--ink-3); }
+.foot a{ color:var(--blue-text); font-weight:650; text-decoration:none; }
+.foot a:hover{ text-decoration:underline; }
+
+/* ---------- responsive ---------- */
+@media (max-width:560px){
+  h1{ font-size:26px; }
+  .res-hero .v{ font-size:37px; }
+  .modes{ grid-template-columns:1fr; }
+  .split{ grid-template-columns:1fr; }
+}
+@media (max-width:999px){ .btn, .chip, .seg button{ min-height:44px; } }
+
+/* ---------- honour the user's own settings ---------- */
+@media (prefers-reduced-transparency: reduce){
+  .glass,.btn,.chip,.seg{ -webkit-backdrop-filter:none; backdrop-filter:none; }
+  .glass,.btn,.chip,.seg{ background:var(--surface); }
+}
+@media (prefers-contrast: more){
+  :root{ --line:rgba(17,17,20,.30); --line-2:rgba(17,17,20,.20); --ink-2:#3A3A3E; }
+  .glass,.btn,.chip,.seg{ -webkit-backdrop-filter:none; backdrop-filter:none; background:var(--surface); }
+  body::before{ background:var(--bg); }
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <header class="hd">
+    <div class="brand">
+      <span class="mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12z"/>
+        </svg>
+      </span>
+      <div><b id="brandName">حاسبة التعرفة</b><span id="brandSub">الكهرباء والمياه</span></div>
+    </div>
+    <div class="hd-tools">
+      <button class="btn icon-btn" id="langBtn" aria-label="تغيير اللغة"><span id="langLabel">EN</span></button>
+      <button class="btn icon-btn" id="themeBtn" aria-label="تبديل المظهر">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+          <circle cx="12" cy="12" r="4.2"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <p class="eyebrow" id="eyebrow">فاتورة الكهرباء</p>
+    <h1 id="pageTitle">احسب فاتورتك بسهولة</h1>
+    <p class="intro" id="intro">أدخل قيمة فاتورتك الحالية بالريال السعودي أو استهلاكك الشهري، وستظهر المقارنة تلقائيًا.</p>
+  </section>
+
+  <div class="seg" role="group" aria-label="نوع الخدمة">
+    <button type="button" data-service="electricity" aria-pressed="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12z"/></svg>
+      <span data-copy="electricity">الكهرباء</span>
+    </button>
+    <button type="button" data-service="water" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5s6.5 7.2 6.5 11.4A6.5 6.5 0 0 1 5.5 14C5.5 9.7 12 2.5 12 2.5z"/></svg>
+      <span data-copy="water">المياه</span>
+    </button>
+  </div>
+
+  <div class="card">
+    <div class="card-h">
+      <span class="tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 7h8M8 11h3M8 15h3M14.5 15h1.5"/></svg></span>
+      <h2 id="methodTitle">طريقة الحساب</h2>
+    </div>
+    <div class="modes" role="radiogroup" aria-label="طريقة الحساب">
+      <div class="mode" role="radio" aria-checked="true" tabindex="0" data-mode="bill">
+        <span class="mode-title"><span class="dot" aria-hidden="true"></span><span id="billChoice">قيمة الفاتورة الحالية</span></span>
+        <span class="input-box"><input id="billInput" type="text" inputmode="decimal" autocomplete="off" placeholder="مثال: 1598.50" aria-label="قيمة الفاتورة الحالية بالريال السعودي"><span class="unit" id="sarUnit">ريال</span></span>
+      </div>
+      <div class="mode" role="radio" aria-checked="false" tabindex="0" data-mode="usage">
+        <span class="mode-title"><span class="dot" aria-hidden="true"></span><span id="usageChoice">الاستهلاك الشهري</span></span>
+        <span class="input-box"><input id="usageInput" type="text" inputmode="decimal" autocomplete="off" placeholder="مثال: 7000" aria-label="الاستهلاك الشهري"><span class="unit" id="usageUnit">ك.و.س</span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="elecSettings">
+    <div class="card-h">
+      <span class="tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v6M12 21a3 3 0 0 0 3-3V9H9v9a3 3 0 0 0 3 3z"/><path d="M9 6h6"/></svg></span>
+      <h2 id="elecSettingsTitle">تفاصيل العداد والفاتورة</h2>
+    </div>
+    <span class="field-label" id="sectorLabel">القطاع</span>
+    <div class="chips" id="sectorChips" role="group" aria-labelledby="sectorLabel"></div>
+    <span class="field-label" id="breakerLabel" style="margin-top:18px">سعة القاطع</span>
+    <div class="chips scroll" id="breakerChips" role="group" aria-labelledby="breakerLabel"></div>
+    <div class="switch-row" style="margin-top:12px">
+      <span class="switch-text"><b id="daysLabel">أيام الفاتورة</b><span id="daysHint">الفترة التي تغطيها الفاتورة</span></span>
+      <span class="stepper">
+        <button type="button" id="daysMinus" aria-label="تقليل الأيام">−</button>
+        <input id="daysInput" type="number" min="1" max="366" value="30" inputmode="numeric" aria-label="أيام الفاتورة">
+        <button type="button" id="daysPlus" aria-label="زيادة الأيام">+</button>
+      </span>
+    </div>
+    <div class="switch-row" id="shortPeriodRow" hidden>
+      <span class="switch-text"><b id="shortLabel">فترة قصيرة من مزود الخدمة</b><span id="shortHint">يُحسب حد الشريحة على ٣٠ يومًا</span></span>
+      <button type="button" class="switch" id="shortPeriod" role="switch" aria-checked="false" aria-label="فترة قصيرة من مزود الخدمة"></button>
+    </div>
+  </div>
+
+  <div class="card" id="waterSettings" hidden>
+    <div class="card-h">
+      <span class="tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5s6.5 7.2 6.5 11.4A6.5 6.5 0 0 1 5.5 14C5.5 9.7 12 2.5 12 2.5z"/></svg></span>
+      <h2 id="waterSettingsTitle">بيانات الاشتراك</h2>
+    </div>
+    <p class="help" id="waterSummary" style="margin:0 0 16px"></p>
+    <span class="field-label" id="unitsLabel">الوحدات المسجلة بالفاتورة</span>
+    <span class="stepper">
+      <button type="button" id="unitsMinus" aria-label="تقليل الوحدات">−</button>
+      <input id="unitsInput" type="number" min="1" max="1000" value="1" inputmode="numeric" aria-label="الوحدات المسجلة بالفاتورة">
+      <button type="button" id="unitsPlus" aria-label="زيادة الوحدات">+</button>
+    </span>
+    <span class="field-label" id="diameterLabel" style="margin-top:18px">قطر العداد (ملم)</span>
+    <div class="chips scroll" id="diameterChips" role="group" aria-labelledby="diameterLabel"></div>
+    <div class="switch-row" style="margin-top:12px">
+      <span class="switch-text"><b id="sewerLabel">خدمة الصرف الصحي</b><span id="sewerHint">تُضاف رسوم الصرف على الفاتورة</span></span>
+      <button type="button" class="switch" id="sewer" role="switch" aria-checked="false" aria-label="خدمة الصرف الصحي"></button>
+    </div>
+  </div>
+
+  <p class="err" id="errBox" role="alert"></p>
+
+  <section id="results" hidden>
+    <div class="card res-hero">
+      <div class="k" id="newLabel">الفاتورة بالتعرفة الجديدة</div>
+      <div class="v"><span id="newTotal" class="num">—</span> <small id="newUnit">ريال</small></div>
+      <div class="sub" id="newSub">شامل ضريبة القيمة المضافة ١٥٪</div>
+      <div class="split">
+        <div class="mini">
+          <div class="k" id="curLabel">الفاتورة بالتعرفة الحالية</div>
+          <div class="v"><span id="curTotal" class="num">—</span> <small id="curUnit">ريال</small></div>
+        </div>
+        <div class="mini">
+          <div class="k" id="diffLabel">الفرق الشهري المتوقع</div>
+          <div class="v"><span id="diffValue" class="num">—</span> <small id="diffUnit">ريال</small></div>
+        </div>
+      </div>
+      <div style="margin-top:16px">
+        <span class="badge" id="diffBadge"><span class="b-dot" aria-hidden="true"></span><span id="diffBadgeText">—</span></span>
+      </div>
+      <div class="meter" id="meterBox">
+        <div class="meter-head"><span id="meterTitle">الاستهلاك التقديري</span><b id="usageResult" class="num">—</b></div>
+        <div class="track" id="track" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="مؤشر شريحة الاستهلاك"><i id="fill" style="width:0%"></i><span class="tick" id="tick" hidden></span></div>
+        <div class="meter-foot"><span id="tierLimit">حد الشريحة: —</span><strong id="tierLabel">—</strong></div>
+      </div>
+    </div>
+
+    <div class="card" id="breakdown">
+      <div class="card-h">
+        <span class="tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>
+        <h2 id="breakdownTitle">تفاصيل الحساب</h2>
+      </div>
+      <div class="tbl-scroll">
+        <table>
+          <thead><tr><th id="thItem">البند</th><th id="thCur">التعرفة الحالية</th><th id="thNew">التعرفة الجديدة</th></tr></thead>
+          <tbody id="breakdownRows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <p class="help" id="helper"></p>
+
+  <footer class="foot">
+    <span id="footNote">النتائج تقديرية وتشمل ضريبة القيمة المضافة ١٥٪، وقد تختلف مع بنود أخرى في الفاتورة.</span>
+    <span class="num">
+      <a id="srcElec" href="https://www.se.com.sa/-/media/sec-jss-app/atc/AR_Giude.ashx" target="_blank" rel="noopener noreferrer">التعرفة الرسمية للكهرباء</a>
+      <span aria-hidden="true"> · </span>
+      <a id="srcWater" href="https://www.nwc.com.sa/AR/Pages/AdujstedWaterandWastewaterServicesRate.aspx" target="_blank" rel="noopener noreferrer">تعرفة المياه</a>
+    </span>
+  </footer>
+</div>
+<span class="sr" id="announce" role="status" aria-live="polite"></span>
+
+<script>
+(function(){
+'use strict';
+
+/* ==========================================================================
+   Tariff schedule — identical maths to the reference calculator
+   (electricity: current + new rates, breaker-band meter fees, 6,000 kWh tier
+    boundary scaled by billing days; water: NWC bands with per-dwelling units)
+   ========================================================================== */
+var ELECTRICITY = {
+  residential:     { ar:'سكني',                  en:'Residential',              rates:[18,30] },
+  commercial:      { ar:'تجاري',                 en:'Commercial',               rates:[22,32] },
+  privateServices: { ar:'الصحي والتعليمي الأهلي', en:'Private health & education', rates:[18] },
+  industrial:      { ar:'صناعي',                 en:'Industrial',               rates:[20] },
+  agricultural:    { ar:'زراعي',                 en:'Agricultural',             rates:[18,22] },
+  charity:         { ar:'الجمعيات الخيرية',       en:'Charitable associations',  rates:[16,20] },
+  government:      { ar:'حكومي',                 en:'Government',               rates:[32] }
+};
+var SECTORS = ['residential','commercial','privateServices','industrial','agricultural','charity','government'];
+var NEW_ELECTRICITY = {
+  residential:     { rates:[21,33], fees:[70,80,90,100] },
+  commercial:      { rates:[25,35], fees:[350,500,700,900] },
+  privateServices: { rates:[25,35], fees:[350,500,700,900] },
+  industrial:      { rates:[23],    fees:[350,500,700,900] },
+  agricultural:    { rates:[19,23], fees:[140,160,180,200] },
+  charity:         { rates:[17,21], fees:[140,160,180,200] },
+  government:      { rates:[35],    fees:[350,500,700,900] }
+};
+var BREAKER_FEES = {
+  '20-99':{current:10,next:70}, '100-199':{current:15,next:80}, '200-299':{current:21,next:90},
+  '300-399':{current:22,next:100}, '400':{current:25,next:100}, 'over-400':{current:30,next:100}
+};
+var BREAKERS = ['20-99','100-199','200-299','300-399','400','over-400'];
+var BREAKER_LABEL = { '20-99':'20–99 A','100-199':'100–199 A','200-299':'200–299 A','300-399':'300–399 A','400':'400 A','over-400':'> 400 A' };
+var WATER_DIAMETERS = [15,20,25,32,40,50,65,80,100,150,200];
+var VAT_RATE = 0.15;
+var MAX_CONSUMPTION = 1000000;
+
+/* ---------- numeric core ---------- */
+function round2(v){
+  var c = v * 100;
+  return Math.round(c + Number.EPSILON * Math.max(1, Math.abs(c)) * 4) / 100;
+}
+function inRange(n, max){ return isFinite(n) && n >= 0 && n <= max; }
+function progressive(usage, limits, rates){
+  var previous = 0;
+  return rates.map(function(rate, i){
+    var end = (limits[i] === undefined) ? Infinity : limits[i];
+    var quantity = Math.max(0, Math.min(usage, end) - previous);
+    previous = end;
+    return { quantity:quantity, rate:rate, cost:round2(quantity * rate) };
+  });
+}
+function finish(rows, fee){
+  var usage = round2(rows.reduce(function(a, r){ return a + r.cost; }, 0));
+  var vat = round2((usage + fee) * VAT_RATE);
+  return { rows:rows, usage:usage, fee:round2(fee), vat:vat, total:round2(usage + fee + vat) };
+}
+function electricityBill(sector, consumption, days, fee, newRates, newFee, shortPeriod){
+  var threshold = 6000 * ((shortPeriod && days < 30) ? 30 : days) / 30;
+  var nextLimits = newRates.length === 1 ? [] : [threshold];
+  var currentRates = ELECTRICITY[sector].rates.map(function(v){ return v / 100; });
+  var currentLimits = currentRates.length === 1 ? [] : [threshold];
+  var current = finish(progressive(consumption, currentLimits, currentRates), fee);
+  var next = finish(progressive(consumption, nextLimits, newRates.map(function(v){ return v / 100; })), newFee);
+  return { current:current, next:next, limits:nextLimits, threshold:threshold, difference:round2(next.total - current.total) };
+}
+function compareSector(sector, consumption, days, breaker, shortPeriod){
+  days = days || 30;
+  breaker = breaker || '20-99';
+  var band = breaker === '20-99' ? 0 : breaker === '100-199' ? 1 : breaker === '200-299' ? 2 : 3;
+  var fee = round2(BREAKER_FEES[breaker].current * days / 30);
+  var newFee = round2(NEW_ELECTRICITY[sector].fees[band] * days / 30);
+  return electricityBill(sector, consumption, days, fee, NEW_ELECTRICITY[sector].rates, newFee, !!shortPeriod);
+}
+function consumptionFromBill(total, days, breaker, sector, shortPeriod){
+  var billedAt = function(c){ return compareSector(sector, c, days, breaker, shortPeriod).current; };
+  var zero = billedAt(0);
+  var top = billedAt(MAX_CONSUMPTION);
+  if (!isFinite(total) || total < zero.total || total > top.total) throw new RangeError('range');
+  if (total === zero.total) return 0;
+  var rates = ELECTRICITY[sector].rates;
+  var threshold = 6000 * ((shortPeriod && days < 30) ? 30 : days) / 30;
+  var firstTierCost = threshold * rates[0] / 100;
+  var usageCost = Math.max(0, total / (1 + VAT_RATE) - zero.fee);
+  var estimated = Math.min(MAX_CONSUMPTION, (rates.length === 1 || usageCost <= firstTierCost)
+    ? usageCost / (rates[0] / 100)
+    : threshold + (usageCost - firstTierCost) / (rates[1] / 100));
+  var nearest = Math.round(estimated);
+  /* a whole-kWh answer that reproduces the entered bill exactly is friendlier,
+     otherwise keep the fraction instead of adding up to half a kWh of error */
+  if (billedAt(nearest).total === total) return nearest;
+  return estimated;
+}
+
+/* ---------- water (NWC residential, bands per registered dwelling) ---------- */
+function waterFees(diameter, units, sewer){
+  var oldFee = diameter <= 20 ? 5 : diameter <= 40 ? 10 : 15;
+  var base = diameter <= 20 ? 20 : diameter <= 40 ? 40 : diameter <= 65 ? 60 : diameter <= 100 ? 80 : 100;
+  var newFee = base + 20 * (units - 1);
+  return { oldFee:oldFee, newFee:newFee };
+}
+function waterBill(consumption, limits, rates, waterFee, sewageFee, sewer){
+  var rows = progressive(consumption, limits, rates);
+  var water = round2(rows.reduce(function(a, r){ return a + r.cost; }, 0));
+  var sewage = sewer ? round2(water * 0.5) : 0;
+  var fee = round2(waterFee + sewageFee);
+  var usage = round2(water + sewage);
+  var vat = round2((usage + fee) * VAT_RATE);
+  return { rows:rows, water:water, sewage:sewage, waterFee:round2(waterFee), sewageFee:round2(sewageFee),
+           usage:usage, fee:fee, vat:vat, total:round2(usage + fee + vat) };
+}
+function compareWater(consumption, options){
+  var units = options.units, diameter = options.diameter, sewer = options.sewer;
+  var fees = waterFees(diameter, units, sewer);
+  var scale = function(list){ return list.map(function(n){ return n * units; }); };
+  var current = waterBill(consumption, scale([15,30,45,60]), [0.1,1,3,4,6], fees.oldFee, 0, sewer);
+  var next = waterBill(consumption, scale([15,30,45]), [1,2,4,6], fees.newFee, sewer ? fees.newFee * 0.5 : 0, sewer);
+  return { current:current, next:next, limits:scale([15,30,45]), difference:round2(next.total - current.total) };
+}
+function waterConsumptionFromBill(total, options){
+  var minimum = compareWater(0, options).current.total;
+  var maximum = compareWater(MAX_CONSUMPTION, options).current.total;
+  if (!isFinite(total) || total < minimum || total > maximum) throw new RangeError('range');
+  if (total === minimum) return 0;
+  var fee = waterFees(options.diameter, options.units, options.sewer).oldFee;
+  var remaining = Math.max(0, (total / (1 + VAT_RATE) - fee) / (options.sewer ? 1.5 : 1));
+  var consumption = 0;
+  var rates = [0.1, 1, 3, 4, 6];
+  for (var i = 0; i < rates.length; i++){
+    var rate = rates[i];
+    var width = (rate === 6) ? Infinity : 15 * options.units;
+    var amount = Math.min(width, remaining / rate);
+    consumption += amount;
+    remaining = Math.max(0, remaining - amount * rate);
+    if (remaining < 1e-9) break;
+  }
+  return Math.min(MAX_CONSUMPTION, consumption);
+}
+
+/* ---------- input parsing (Arabic / Persian / Bengali / Devanagari digits) ---------- */
+function toWestern(s){
+  return ('' + (s === null || s === undefined ? '' : s)).trim()
+    .replace(/[\u0660-\u0669]/g, function(d){ return String(d.charCodeAt(0) - 1632); })
+    .replace(/[\u06F0-\u06F9]/g, function(d){ return String(d.charCodeAt(0) - 1776); })
+    .replace(/[\u09E6-\u09EF]/g, function(d){ return String(d.charCodeAt(0) - 2534); })
+    .replace(/[\u0966-\u096F]/g, function(d){ return String(d.charCodeAt(0) - 2406); })
+    .replace(/\u066C/g, ',').replace(/\u066B/g, '.');
+}
+function parseNumber(s){
+  var n = toWestern(s).replace(/[,\s\u00A0]/g, '');
+  if (!/^\d*\.?\d*$/.test(n) || n === '' || n === '.') return NaN;
+  var v = parseFloat(n);
+  return isFinite(v) ? v : NaN;
+}
+function fmt(n, digits){
+  if (!isFinite(n)) return '—';
+  return n.toLocaleString('en-US', { minimumFractionDigits:digits === undefined ? 2 : digits,
+                                     maximumFractionDigits:digits === undefined ? 2 : digits });
+}
+
+/* ---------- copy (ar / en) ---------- */
+var COPY = {
+  ar:{
+    brandName:'حاسبة التعرفة', brandSub:'الكهرباء والمياه', lang:'EN',
+    electricity:'الكهرباء', water:'المياه',
+    eyebrow:'فاتورة الكهرباء', eyebrowWater:'فاتورة المياه',
+    title:'احسب فاتورتك بسهولة',
+    intro:'أدخل قيمة فاتورتك الحالية بالريال السعودي أو استهلاكك الشهري، وستظهر المقارنة تلقائيًا.',
+    introWater:'أدخل قيمة فاتورة المياه الحالية أو استهلاكك بالأمتار المكعبة، وستظهر المقارنة تلقائيًا.',
+    method:'طريقة الحساب', billChoice:'قيمة الفاتورة الحالية', usageChoice:'الاستهلاك الشهري',
+    usageChoiceWater:'الاستهلاك الشهري (م³)', sar:'ريال', kwh:'ك.و.س', m3:'م³',
+    billPh:'مثال: 1598.50', billPhWater:'مثال: 120', usagePh:'مثال: 7000', usagePhWater:'مثال: 25',
+    elecSettings:'تفاصيل العداد والفاتورة', sector:'القطاع', breaker:'سعة القاطع',
+    days:'أيام الفاتورة', daysHint:'الفترة التي تغطيها الفاتورة',
+    shortPeriod:'فترة قصيرة من مزود الخدمة', shortHint:'يُحسب حد الشريحة على ٣٠ يومًا',
+    waterSettings:'بيانات الاشتراك', units:'الوحدات المسجلة بالفاتورة', diameter:'قطر العداد (ملم)',
+    sewer:'خدمة الصرف الصحي', sewerHint:'تُضاف رسوم الصرف على الفاتورة',
+    waterSummary:'الوحدات: {units} · القطر: {diameter} ملم',
+    newLabel:'الفاتورة بالتعرفة الجديدة', newSub:'شامل ضريبة القيمة المضافة ١٥٪',
+    curLabel:'الفاتورة بالتعرفة الحالية', diffLabel:'الفرق الشهري المتوقع',
+    increase:'الزيادة الشهرية المتوقعة', decrease:'الانخفاض الشهري المتوقع', noChange:'لا فرق بين التعرفتين',
+    meterEst:'الاستهلاك التقديري', meterEntered:'الاستهلاك المُدخل',
+    tierLimit:'حد الشريحة: {limit} {unit}', singleTier:'شريحة واحدة', tierN:'الشريحة {n}',
+    breakdown:'تفاصيل الحساب', item:'البند', curTariff:'التعرفة الحالية', newTariff:'التعرفة الجديدة',
+    usageCost:'قيمة الاستهلاك', meterFee:'رسم العداد', waterCost:'قيمة المياه', sewageCost:'قيمة الصرف',
+    waterFee:'رسم المياه', sewageFee:'رسم الصرف', vat:'ضريبة القيمة المضافة ١٥٪', total:'الإجمالي',
+    tierRow:'الشريحة {n} · {qty} {unit} — {rate} هللة', 
+    helper:'النتيجة تقديرية لفاتورة مدتها {days} يومًا وتشمل ضريبة القيمة المضافة.',
+    helperWater:'النتيجة تقديرية وتعتمد على عدد الوحدات المسجلة وقطر العداد.',
+    footNote:'النتائج تقديرية وتشمل ضريبة القيمة المضافة ١٥٪، وقد تختلف مع بنود أخرى في الفاتورة.',
+    srcElec:'التعرفة الرسمية للكهرباء', srcWater:'تعرفة المياه',
+    errSettings:'تحقق من إعدادات الفاتورة.', errBill:'أدخل قيمة بين {min} و{max} ريال.',
+    errUsage:'أدخل استهلاكًا صحيحًا.', errUnits:'عدد الوحدات غير صحيح.'
+  },
+  en:{
+    brandName:'Tariff Calculator', brandSub:'Electricity & Water', lang:'ع',
+    electricity:'Electricity', water:'Water',
+    eyebrow:'Electricity bill', eyebrowWater:'Water bill',
+    title:'Work out your bill in seconds',
+    intro:'Enter your current bill in SAR or your monthly consumption and the comparison appears instantly.',
+    introWater:'Enter your current water bill or your consumption in m³ and the comparison appears instantly.',
+    method:'How to calculate', billChoice:'Current bill amount', usageChoice:'Monthly consumption',
+    usageChoiceWater:'Monthly consumption (m³)', sar:'SAR', kwh:'kWh', m3:'m³',
+    billPh:'e.g. 1598.50', billPhWater:'e.g. 120', usagePh:'e.g. 7000', usagePhWater:'e.g. 25',
+    elecSettings:'Meter & bill details', sector:'Sector', breaker:'Breaker capacity',
+    days:'Billing days', daysHint:'Period the bill covers',
+    shortPeriod:'Short provider period', shortHint:'Tier boundary scaled to 30 days',
+    waterSettings:'Subscription details', units:'Registered units on the bill', diameter:'Meter diameter (mm)',
+    sewer:'Sewerage service', sewerHint:'Sewerage charges are added',
+    waterSummary:'Units: {units} · Diameter: {diameter} mm',
+    newLabel:'Bill at the new tariff', newSub:'VAT of 15% included',
+    curLabel:'Bill at the current tariff', diffLabel:'Expected monthly difference',
+    increase:'Expected monthly increase', decrease:'Expected monthly decrease', noChange:'No difference between tariffs',
+    meterEst:'Estimated consumption', meterEntered:'Entered consumption',
+    tierLimit:'Tier boundary: {limit} {unit}', singleTier:'Single tier', tierN:'Tier {n}',
+    breakdown:'Calculation details', item:'Item', curTariff:'Current tariff', newTariff:'New tariff',
+    usageCost:'Consumption charge', meterFee:'Meter fee', waterCost:'Water charge', sewageCost:'Sewerage charge',
+    waterFee:'Water fee', sewageFee:'Sewerage fee', vat:'VAT 15%', total:'Total',
+    tierRow:'Tier {n} · {qty} {unit} — {rate} halala',
+    helper:'Estimate for a {days}-day bill, VAT included.',
+    helperWater:'Estimate based on the registered units and meter diameter.',
+    footNote:'Estimates include 15% VAT and may differ from other bill items.',
+    srcElec:'Official electricity tariff', srcWater:'Water tariff',
+    errSettings:'Check the bill settings.', errBill:'Enter a value between {min} and {max} SAR.',
+    errUsage:'Enter a valid consumption.', errUnits:'Invalid number of units.'
+  }
+};
+var lang = 'ar';
+function t(key, vars){
+  var s = (COPY[lang] && COPY[lang][key]) || (COPY.ar[key]) || key;
+  if (vars) Object.keys(vars).forEach(function(k){ s = s.replace('{' + k + '}', vars[k]); });
+  return s;
+}
+
+/* ==========================================================================
+   State + UI
+   ========================================================================== */
+var $ = function(id){ return document.getElementById(id); };
+var state = {
+  service:'electricity', mode:'bill', sector:'residential', breaker:'20-99',
+  days:30, shortPeriod:false, units:1, diameter:20, sewer:false
+};
+var saved = { electricity:{ mode:'bill', bill:'', usage:'' }, water:{ mode:'bill', bill:'', usage:'' } };
+
+function isInt(n){ return typeof n === 'number' && isFinite(n) && Math.floor(n) === n; }
+function activeField(){ return state.mode === 'bill' ? $('billInput') : $('usageInput'); }
+function otherField(){ return state.mode === 'bill' ? $('usageInput') : $('billInput'); }
+function waterOptions(){ return { units:state.units, diameter:state.diameter, sewer:state.sewer }; }
+function isWater(){ return state.service === 'water'; }
+
+/* ---------- chips ---------- */
+function chip(label, value, selected, attrs){
+  return '<button type="button" class="chip" aria-pressed="' + (selected ? 'true' : 'false') + '" '
+    + (attrs || '') + ' data-value="' + value + '">' + label + '</button>';
+}
+function buildChips(){
+  $('sectorChips').innerHTML = SECTORS.map(function(s){
+    return chip(lang === 'ar' ? ELECTRICITY[s].ar : ELECTRICITY[s].en, s, state.sector === s);
+  }).join('');
+  $('breakerChips').innerHTML = BREAKERS.map(function(b){
+    return chip(BREAKER_LABEL[b], b, state.breaker === b);
+  }).join('');
+  $('diameterChips').innerHTML = WATER_DIAMETERS.map(function(d){
+    return chip(String(d), String(d), state.diameter === d);
+  }).join('');
+}
+
+/* ---------- rendering ---------- */
+function renderBreakdown(res, consumption, water){
+  var rows = '';
+  var unit = water ? t('m3') : t('kwh');
+  if (water){
+    var a = res.current, b = res.next;
+    rows += rowHtml(t('waterCost'), fmt(a.water), fmt(b.water));
+    if (state.sewer) rows += rowHtml(t('sewageCost'), fmt(a.sewage), fmt(b.sewage));
+    rows += rowHtml(t('waterFee'), fmt(a.waterFee), fmt(b.waterFee));
+    if (state.sewer) rows += rowHtml(t('sewageFee'), fmt(a.sewageFee), fmt(b.sewageFee));
+  } else {
+    var maxTiers = Math.max(res.current.rows.length, res.next.rows.length);
+    var tierRows = [];
+    for (var i = 0; i < maxTiers; i++){
+      var rc = res.current.rows[i], rn = res.next.rows[i];
+      var qty = rc ? rc.quantity : (rn ? rn.quantity : 0);
+      var rateTxt = (rc && rn) ? (fmt(rc.rate * 100, 2) + ' / ' + fmt(rn.rate * 100, 2)) : fmt((rc || rn).rate * 100, 2);
+      var label = t('tierRow', { n:(i + 1), qty:fmt(qty, 0), unit:unit, rate:rateTxt });
+      /* an empty upper tier is noise: show it only when nothing else is left */
+      var empty = (!rc || rc.cost === 0) && (!rn || rn.cost === 0);
+      tierRows.push({ empty:empty, html:rowHtml(label, rc ? fmt(rc.cost) : '—', rn ? fmt(rn.cost) : '—') });
+    }
+    var kept = tierRows.filter(function(r){ return !r.empty; });
+    (kept.length ? kept : tierRows.slice(0, 1)).forEach(function(r){ rows += r.html; });
+    rows += rowHtml(t('usageCost'), fmt(res.current.usage), fmt(res.next.usage));
+    rows += rowHtml(t('meterFee'), fmt(res.current.fee), fmt(res.next.fee));
+  }
+  rows += rowHtml(t('vat'), fmt(res.current.vat), fmt(res.next.vat));
+  rows += '<tr class="total"><th scope="row">' + t('total') + '</th><td class="num">'
+       + fmt(res.current.total) + '</td><td class="num">' + fmt(res.next.total) + '</td></tr>';
+  $('breakdownRows').innerHTML = rows;
+}
+function rowHtml(label, cur, next){
+  return '<tr><th scope="row">' + label + '</th><td class="num">' + cur + '</td><td class="num">' + next + '</td></tr>';
+}
+
+function render(){
+  var water = isWater();
+  var field = activeField(), other = otherField();
+  var raw = field.value.trim();
+  var value = parseNumber(raw);
+  var settingsValid = water
+    ? (isInt(state.units) && state.units >= 1 && state.units <= 1000)
+    : (isInt(state.days) && state.days >= 1 && state.days <= 366);
+
+  var calc = function(use){
+    return water ? compareWater(use, waterOptions())
+                 : compareSector(state.sector, use, state.days, state.breaker, state.shortPeriod);
+  };
+  var billMin = settingsValid ? calc(0).current.total : 0;
+  var billMax = settingsValid ? calc(MAX_CONSUMPTION).current.total : 0;
+  var valid = settingsValid && (raw === '' ||
+    (isFinite(value) && value >= (state.mode === 'bill' ? billMin : 0) &&
+     value <= (state.mode === 'bill' ? billMax : MAX_CONSUMPTION)));
+
+  $('waterSummary').textContent = t('waterSummary', { units:fmt(state.units, 0), diameter:String(state.diameter) });
+  $('shortPeriodRow').hidden = water || state.days >= 30 || state.days < 1;
+  $('errBox').textContent = valid ? '' : (!settingsValid ? t('errUnits')
+    : (state.mode === 'bill'
+        ? t('errBill', { min:fmt(billMin), max:fmt(billMax) })
+        : t('errUsage')));
+  field.setAttribute('aria-invalid', String(!valid));
+  field.closest('.input-box').setAttribute('data-invalid', String(!valid));
+  other.setAttribute('aria-invalid', 'false');
+  other.closest('.input-box').setAttribute('data-invalid', 'false');
+
+  if (!valid || raw === ''){
+    $('results').hidden = true;
+    other.value = '';
+    $('announce').textContent = '';
+    return;
+  }
+  $('results').hidden = false;
+
+  var consumption = (state.mode === 'bill')
+    ? (water ? waterConsumptionFromBill(value, waterOptions())
+             : consumptionFromBill(value, state.days, state.breaker, state.sector, state.shortPeriod))
+    : value;
+  var res = calc(consumption);
+  var currentTotal = (state.mode === 'bill') ? value : res.current.total;
+  other.value = (state.mode === 'bill') ? fmt(consumption) : fmt(currentTotal);
+
+  var diff = round2(res.next.total - currentTotal);
+  $('newTotal').textContent = fmt(res.next.total);
+  $('curTotal').textContent = fmt(currentTotal);
+  $('diffValue').textContent = fmt(Math.abs(diff));
+
+  var badge = $('diffBadge');
+  badge.className = 'badge ' + (diff > 0 ? 'up' : diff < 0 ? 'down' : 'flat');
+  $('diffBadgeText').textContent = diff > 0 ? t('increase') : diff < 0 ? t('decrease') : t('noChange');
+
+  var unit = water ? t('m3') : t('kwh');
+  $('usageResult').textContent = (state.mode === 'bill' ? '≈ ' : '') + fmt(consumption) + ' ' + unit;
+  $('meterTitle').textContent = state.mode === 'bill' ? t('meterEst') : t('meterEntered');
+
+  var singleTier = res.limits.length === 0;
+  var threshold = singleTier ? 0 : res.limits[0];
+  var meterMax = singleTier ? Math.max(1, consumption) : threshold * (water ? 4 : 2);
+  var pct = singleTier ? 0 : Math.min(100, (consumption / meterMax) * 100);
+  $('fill').style.width = (singleTier ? 100 : pct) + '%';
+  var track = $('track');
+  track.className = 'track' + (singleTier ? '' : (consumption > threshold ? ' over' : (consumption >= threshold * 0.85 ? ' warn' : '')));
+  track.setAttribute('aria-valuemax', String(Math.round(meterMax)));
+  track.setAttribute('aria-valuenow', String(Math.min(Math.round(consumption), Math.round(meterMax))));
+  track.setAttribute('aria-valuetext', fmt(consumption) + ' ' + unit + ' — ' + tierName(res, consumption, water, singleTier, threshold));
+  var tick = $('tick');
+  tick.hidden = singleTier;
+  if (!singleTier) tick.style.insetInlineStart = Math.min(100, (threshold / meterMax) * 100) + '%';
+  $('tierLimit').textContent = singleTier ? t('singleTier')
+    : t('tierLimit', { limit:fmt(threshold, 0), unit:unit });
+  $('tierLabel').textContent = tierName(res, consumption, water, singleTier, threshold);
+
+  renderBreakdown(res, consumption, water);
+  $('helper').textContent = water ? t('helperWater') : t('helper', { days:fmt(state.days, 0) });
+  $('announce').textContent = t('curLabel') + ' ' + fmt(currentTotal) + ' ' + t('sar') + ' · '
+    + t('newLabel') + ' ' + fmt(res.next.total) + ' ' + t('sar') + ' · '
+    + (diff > 0 ? t('increase') : diff < 0 ? t('decrease') : t('noChange')) + ' ' + fmt(Math.abs(diff));
+}
+function tierName(res, consumption, water, singleTier, threshold){
+  if (singleTier) return t('singleTier');
+  var n = water ? (1 + res.limits.filter(function(l){ return consumption > l; }).length)
+                : (consumption > threshold ? 2 : 1);
+  return t('tierN', { n:fmt(n, 0) });
+}
+
+/* ---------- copy / language ---------- */
+function applyLanguage(){
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.title = t('brandName') + ' | ' + t('brandSub');
+  var set = function(id, key, vars){ var el = $(id); if (el) el.textContent = t(key, vars); };
+  set('brandName','brandName'); set('brandSub','brandSub'); set('langLabel','lang');
+  set('pageTitle','title'); set('methodTitle','method'); set('billChoice','billChoice');
+  set('usageChoice', isWater() ? 'usageChoiceWater' : 'usageChoice');
+  set('elecSettingsTitle','elecSettings'); set('sectorLabel','sector'); set('breakerLabel','breaker');
+  set('daysLabel','days'); set('daysHint','daysHint'); set('shortLabel','shortPeriod'); set('shortHint','shortHint');
+  set('waterSettingsTitle','waterSettings'); set('unitsLabel','units'); set('diameterLabel','diameter');
+  set('sewerLabel','sewer'); set('sewerHint','sewerHint');
+  set('newLabel','newLabel'); set('newSub','newSub'); set('curLabel','curLabel'); set('diffLabel','diffLabel');
+  set('breakdownTitle','breakdown'); set('thItem','item'); set('thCur','curTariff'); set('thNew','newTariff');
+  set('srcElec','srcElec'); set('srcWater','srcWater'); set('footNote','footNote');
+  set('sarUnit','sar'); set('newUnit','sar'); set('curUnit','sar'); set('diffUnit','sar');
+  set('usageUnit', isWater() ? 'm3' : 'kwh');
+  document.querySelectorAll('[data-copy]').forEach(function(el){ el.textContent = t(el.getAttribute('data-copy')); });
+  $('billInput').placeholder = t(isWater() ? 'billPhWater' : 'billPh');
+  $('usageInput').placeholder = t(isWater() ? 'usagePhWater' : 'usagePh');
+  $('eyebrow').textContent = t(isWater() ? 'eyebrowWater' : 'eyebrow');
+  $('intro').textContent = t(isWater() ? 'introWater' : 'intro');
+  buildChips();
+  render();
+}
+
+/* ---------- service / mode ---------- */
+function setService(next){
+  if (next === state.service) return;
+  saved[state.service] = { mode:state.mode, bill:$('billInput').value, usage:$('usageInput').value };
+  state.service = next;
+  $('billInput').value = saved[next].bill;
+  $('usageInput').value = saved[next].usage;
+  $('elecSettings').hidden = next === 'water';
+  $('waterSettings').hidden = next !== 'water';
+  document.querySelectorAll('[data-service]').forEach(function(b){
+    b.setAttribute('aria-pressed', String(b.getAttribute('data-service') === next));
+  });
+  setMode(saved[next].mode, true);
+}
+function setMode(next, silent){
+  state.mode = next;
+  document.querySelectorAll('.mode').forEach(function(card){
+    card.setAttribute('aria-checked', String(card.getAttribute('data-mode') === next));
+  });
+  if (!silent) applyLanguage(); else render();
+}
+
+/* ---------- events ---------- */
+document.querySelectorAll('[data-service]').forEach(function(btn){
+  btn.addEventListener('click', function(){ setService(btn.getAttribute('data-service')); });
+});
+document.querySelectorAll('.mode').forEach(function(card){
+  var activate = function(){
+    var next = card.getAttribute('data-mode');
+    var changed = next !== state.mode;
+    setMode(next);
+    if (changed){ var f = activeField(); f.focus(); f.select(); }
+  };
+  card.addEventListener('click', function(ev){
+    if (ev.target && ev.target.tagName === 'INPUT') return;
+    activate();
+  });
+  card.addEventListener('keydown', function(ev){
+    if (ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); activate(); }
+  });
+});
+['billInput','usageInput'].forEach(function(id){
+  var el = $(id);
+  el.addEventListener('focus', function(){ setMode(id === 'billInput' ? 'bill' : 'usage', true); });
+  el.addEventListener('input', function(){
+    var before = el.value;
+    var clean = toWestern(before).replace(/[^0-9.,]/g, '');
+    if (clean !== before) el.value = clean;
+    setMode(id === 'billInput' ? 'bill' : 'usage', true);
+    render();
+  });
+});
+function bindChips(){
+  [['sectorChips', function(v){ state.sector = v; }],
+   ['breakerChips', function(v){ state.breaker = v; }],
+   ['diameterChips', function(v){ state.diameter = parseInt(v, 10); }]].forEach(function(pair){
+    var box = $(pair[0]);
+    box.addEventListener('click', function(ev){
+      var btn = ev.target.closest ? ev.target.closest('.chip') : null;
+      if (!btn) return;
+      var val = btn.getAttribute('data-value');
+      pair[1](val);
+      Array.prototype.forEach.call(box.querySelectorAll('.chip'), function(c){
+        c.setAttribute('aria-pressed', String(c === btn));
+      });
+      render();
+    });
+  });
+}
+function bindSwitch(id, key){
+  $(id).addEventListener('click', function(){
+    state[key] = !state[key];
+    $(id).setAttribute('aria-checked', String(state[key]));
+    render();
+  });
+}
+function bindStepper(minusId, plusId, inputId, key, min, max){
+  var set = function(delta){
+    var v = parseInt($(inputId).value, 10);
+    if (!isFinite(v)) v = min;
+    v = Math.min(max, Math.max(min, v + delta));
+    $(inputId).value = v;
+    state[key] = v;
+    render();
+  };
+  $(minusId).addEventListener('click', function(){ set(-1); });
+  $(plusId).addEventListener('click', function(){ set(1); });
+  $(inputId).addEventListener('input', function(){
+    var v = parseInt($(inputId).value, 10);
+    if (isFinite(v)) state[key] = Math.min(max, Math.max(min, v));
+    render();
+  });
+}
+$('langBtn').addEventListener('click', function(){
+  lang = lang === 'ar' ? 'en' : 'ar';
+  try{ localStorage.setItem('tariff-lang', lang); }catch(e){}
+  applyLanguage();
+});
+var THEMES = ['system','light','dark'];
+$('themeBtn').addEventListener('click', function(){
+  var cur = 'system';
+  try{ cur = localStorage.getItem('tariff-theme') || 'system'; }catch(e){}
+  var next = THEMES[(THEMES.indexOf(cur) + 1) % THEMES.length];
+  try{ localStorage.setItem('tariff-theme', next); }catch(e){}
+  applyTheme(next);
+});
+function applyTheme(mode){
+  var root = document.documentElement;
+  root.removeAttribute('data-theme');
+  if (mode === 'light' || mode === 'dark') root.setAttribute('data-theme', mode);
+  $('themeBtn').setAttribute('aria-label', mode === 'dark' ? 'الوضع الليلي' : mode === 'light' ? 'الوضع النهاري' : 'حسب الجهاز');
+}
+
+/* ---------- scriptable core (used by the parity test + future automation) ---------- */
+window.tariffMath = {
+  compareSector:compareSector, consumptionFromBill:consumptionFromBill,
+  compareWater:compareWater, waterConsumptionFromBill:waterConsumptionFromBill,
+  ELECTRICITY:ELECTRICITY, NEW_ELECTRICITY:NEW_ELECTRICITY, BREAKER_FEES:BREAKER_FEES,
+  WATER_DIAMETERS:WATER_DIAMETERS, round2:round2
+};
+
+/* ---------- init ---------- */
+try{
+  var sl = localStorage.getItem('tariff-lang');
+  if (sl === 'ar' || sl === 'en') lang = sl;
+  applyTheme(localStorage.getItem('tariff-theme') || 'system');
+}catch(e){}
+bindChips();
+bindSwitch('shortPeriod', 'shortPeriod');
+bindSwitch('sewer', 'sewer');
+bindStepper('daysMinus', 'daysPlus', 'daysInput', 'days', 1, 366);
+bindStepper('unitsMinus', 'unitsPlus', 'unitsInput', 'units', 1, 1000);
+applyLanguage();
+})();
+</script>
+</body>
+</html>
