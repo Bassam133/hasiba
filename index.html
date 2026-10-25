@@ -274,6 +274,7 @@ td .d{ display:inline-block; font-size:11.5px; font-weight:700; color:var(--ink-
 
 .err{ color:var(--red-text); font-size:13px; font-weight:650; min-height:20px; margin:10px 2px; }
 .help{ font-size:12.5px; color:var(--ink-3); line-height:1.7; margin:14px 2px 0; }
+.notice{ padding:11px 14px; border-radius:14px; background:var(--surface-2); border:1px solid var(--line); color:var(--ink-2); }
 .foot{ display:flex; flex-wrap:wrap; gap:14px; align-items:center; justify-content:space-between; margin-top:22px;
   padding-top:16px; border-top:1px solid var(--line); font-size:12.5px; color:var(--ink-3); }
 .foot a{ color:var(--blue-text); font-weight:650; text-decoration:none; }
@@ -442,6 +443,7 @@ td .d{ display:inline-block; font-size:11.5px; font-weight:700; color:var(--ink-
   </section>
 
   <p class="help" id="helper"></p>
+  <p class="help notice" id="effectiveNote"></p>
 
   <footer class="foot">
     <span id="footNote">النتائج تقديرية وتشمل ضريبة القيمة المضافة ١٥٪، وقد تختلف مع بنود أخرى في الفاتورة.</span>
@@ -643,6 +645,7 @@ var COPY = {
     waterFee:'رسم المياه', sewageFee:'رسم الصرف', vat:'ضريبة القيمة المضافة ١٥٪', total:'الإجمالي',
     tierRow:'الشريحة {n} · {qty} {unit} — {rate} هللة', 
     helper:'النتيجة تقديرية لفاتورة مدتها {days} يومًا وتشمل ضريبة القيمة المضافة.',
+    effectiveNote:'التعرفة الجديدة أُعلنت في ٢٥ أكتوبر ٢٠٢٦ وتُطبَّق من ١ يناير ٢٠٢٧. الحاسبة تعرض الفرق بين التعرفتين قبل وبعد.',
     helperWater:'النتيجة تقديرية وتعتمد على عدد الوحدات المسجلة وقطر العداد.',
     footNote:'النتائج تقديرية وتشمل ضريبة القيمة المضافة ١٥٪، وقد تختلف مع بنود أخرى في الفاتورة.',
     srcElec:'التعرفة الرسمية للكهرباء', srcWater:'تعرفة المياه',
@@ -675,6 +678,7 @@ var COPY = {
     waterFee:'Water fee', sewageFee:'Sewerage fee', vat:'VAT 15%', total:'Total',
     tierRow:'Tier {n} · {qty} {unit} — {rate} halala',
     helper:'Estimate for a {days}-day bill, VAT included.',
+    effectiveNote:'The new tariff was announced on 25 Oct 2026 and applies from 1 Jan 2027. The calculator shows the difference between the two.',
     helperWater:'Estimate based on the registered units and meter diameter.',
     footNote:'Estimates include 15% VAT and may differ from other bill items.',
     srcElec:'Official electricity tariff', srcWater:'Water tariff',
@@ -836,6 +840,7 @@ function render(){
 
   renderBreakdown(res, consumption, water);
   $('helper').textContent = water ? t('helperWater') : t('helper', { days:fmt(state.days, 0) });
+  $('effectiveNote').textContent = t('effectiveNote');
   $('announce').textContent = t('curLabel') + ' ' + fmt(currentTotal) + ' ' + t('sar') + ' · '
     + t('newLabel') + ' ' + fmt(res.next.total) + ' ' + t('sar') + ' · '
     + (diff > 0 ? t('increase') : diff < 0 ? t('decrease') : t('noChange')) + ' ' + fmt(Math.abs(diff));
